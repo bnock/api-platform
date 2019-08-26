@@ -3,13 +3,13 @@ version: '3.4'
 x-cache:
   &cache
   cache_from:
-    - ${CONTAINER_REGISTRY_BASE}/php
-    - ${CONTAINER_REGISTRY_BASE}/nginx
-    - ${CONTAINER_REGISTRY_BASE}/varnish
+    - ${CONTAINER_REGISTRY_BASE}/api-platform-php:1.0.0
+    - ${CONTAINER_REGISTRY_BASE}/api-platform-nginx:1.0.0
+    - ${CONTAINER_REGISTRY_BASE}/api-platform-varnish:1.0.0
 
 services:
   php:
-    image: ${CONTAINER_REGISTRY_BASE}/php
+    image: ${CONTAINER_REGISTRY_BASE}/api-platform-php:1.0.0
     build:
       context: ./api
       target: api_platform_php
@@ -23,7 +23,7 @@ services:
       # - ./api/var:/srv/api/var:rw
 
   api:
-    image: ${CONTAINER_REGISTRY_BASE}/nginx
+    image: ${CONTAINER_REGISTRY_BASE}/api-platform-nginx:1.0.0
     build:
       context: ./api
       target: api_platform_nginx
@@ -37,7 +37,7 @@ services:
       - "8080:80"
 
   cache-proxy:
-    image: ${CONTAINER_REGISTRY_BASE}/varnish
+    image: ${CONTAINER_REGISTRY_BASE}/api-platform-varnish:1.0.0
     build:
       context: ./api
       target: api_platform_varnish
@@ -53,18 +53,19 @@ services:
 
   db:
     # In production, you may want to use a managed database service
-    image: postgres:10-alpine
+    image: mysql:5.7
     environment:
-      - POSTGRES_DB=api
-      - POSTGRES_USER=api-platform
+      - MYSQL_ROOT_PASSWORD=!ChangeMe!
+      - MYSQL_DATABASE=api
+      - MYSQL_USER=api-platform
       # You should definitely change the password in production
-      - POSTGRES_PASSWORD=!ChangeMe!
+      - MYSQL_PASSWORD=!ChangeMe!
     volumes:
-      - db-data:/var/lib/postgresql/data:rw
+      # - db-data:/var/lib/mysql:rw
       # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
+      - ./docker/db/mysql:/var/lib/mysql:rw
     ports:
-      - "5432:5432"
+      - "3306:3306"
 
   mercure:
     # In production, you may want to use the managed version of Mercure, https://mercure.rocks
@@ -82,7 +83,7 @@ services:
   client:
     # Use a static website hosting service in production
     # See https://facebook.github.io/create-react-app/docs/deployment
-    image: ${CONTAINER_REGISTRY_BASE}/client
+    image: ${CONTAINER_REGISTRY_BASE}/api-platform-client:1.0.0
     build:
       context: ./client
       cache_from:
@@ -98,7 +99,7 @@ services:
   admin:
     # Use a static website hosting service in production
     # See https://facebook.github.io/create-react-app/docs/deployment
-    image: ${CONTAINER_REGISTRY_BASE}/admin
+    image: ${CONTAINER_REGISTRY_BASE}/api-platform-admin:1.0.0
     build:
       context: ./admin
       cache_from:
